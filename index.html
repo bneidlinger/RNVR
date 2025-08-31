@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RangerEye — In‑Vehicle NVR Build Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Retro Dark Theme */
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #0f0f17;
+      --bg-tertiary: #141420;
+      --bg-surface: #1a1a2e;
+      --bg-elevated: #1e1e32;
+      
+      /* Neon Accents */
+      --neon-cyan: #00ffff;
+      --neon-pink: #ff0080;
+      --neon-green: #00ff41;
+      --neon-orange: #ff8000;
+      --neon-purple: #8000ff;
+      
+      /* Text Colors */
+      --text-primary: #ffffff;
+      --text-secondary: #b8bcc8;
+      --text-muted: #7c7f93;
+      --text-accent: var(--neon-cyan);
+      
+      /* Status Colors */
+      --success: #00ff88;
+      --warning: #ffaa00;
+      --error: #ff4757;
+      --info: var(--neon-cyan);
+      
+      /* Gradients */
+      --gradient-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      --gradient-accent: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-pink) 100%);
+      --gradient-surface: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(20, 20, 32, 0.9) 100%);
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.7);
+      --shadow-neon: 0 0 20px rgba(0, 255, 255, 0.3);
+      
+      /* Typography */
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      
+      /* Spacing */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      --space-2xl: 3rem;
+      --space-3xl: 4rem;
+      
+      /* Border Radius */
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+      scroll-behavior: smooth;
+    }
+
+    /* Animated Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 90%, rgba(0, 255, 65, 0.05) 0%, transparent 50%);
+      z-index: -1;
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-xl) var(--space-lg);
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: var(--space-3xl);
+      position: relative;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -var(--space-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 2px;
+      background: var(--gradient-accent);
+      border-radius: 1px;
+    }
+
+    .header h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      margin: 0 0 var(--space-md) 0;
+      background: var(--gradient-accent);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: var(--shadow-neon);
+      letter-spacing: -0.02em;
+    }
+
+    .header .subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-bottom: var(--space-lg);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      background: var(--bg-surface);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 50px;
+      padding: var(--space-sm) var(--space-lg);
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--neon-cyan);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .version-badge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+      animation: shine 3s infinite;
+    }
+
+    @keyframes shine {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
+
+    /* Layout Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+      margin-bottom: var(--space-3xl);
+    }
+
+    @media (min-width: 1024px) {
+      .grid {
+        grid-template-columns: 1fr 400px;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--gradient-surface);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--gradient-accent);
+      opacity: 0.5;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 255, 255, 0.1);
+      border-color: rgba(0, 255, 255, 0.3);
+    }
+
+    /* Table of Contents */
+    .toc {
+      position: sticky;
+      top: var(--space-xl);
+      height: fit-content;
+    }
+
+    .toc h2 {
+      color: var(--text-accent);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 var(--space-lg) 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .toc h2::before {
+      content: '▶';
+      font-family: var(--font-mono);
+      color: var(--neon-green);
+      font-size: 1rem;
+    }
+
+    .toc-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .toc-item {
+      margin-bottom: var(--space-sm);
+    }
+
+    .toc-link {
+      display: flex;
+      align-items: center;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+      position: relative;
+    }
+
+    .toc-link:hover {
+      background: rgba(0, 255, 255, 0.1);
+      color: var(--text-accent);
+      border-left-color: var(--neon-cyan);
+      transform: translateX(4px);
+    }
+
+    .toc-link::before {
+      content: attr(data-step);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: var(--bg-tertiary);
+      color: var(--neon-cyan);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: var(--space-sm);
+      min-width: 24px;
+      text-align: center;
+    }
+
+    /* Typography */
+    h2 {
+      color: var(--text-accent);
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 var(--space-lg) 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    h2::before {
+      content: '#';
+      font-family: var(--font-mono);
+      color: var(--neon-pink);
+      font-size: 1.5rem;
+    }
+
+    h3 {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: var(--space-xl) 0 var(--space-md) 0;
+    }
+
+    p {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* Lists */
+    ul, ol {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+    }
+
+    li {
+      margin-bottom: var(--space-sm);
+      padding-left: var(--space-sm);
+    }
+
+    /* Code */
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      background: var(--bg-tertiary);
+      color: var(--neon-green);
+      padding: 0.2em 0.4em;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(0, 255, 65, 0.2);
+    }
+
+    pre {
+      font-family: var(--font-mono);
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      overflow-x: auto;
+      margin: var(--space-lg) 0;
+      position: relative;
+      box-shadow: var(--shadow-md);
+    }
+
+    pre::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-accent);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text-primary);
+    }
+
+    /* Pills */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: 50px;
+      background: var(--bg-elevated);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      margin-right: var(--space-sm);
+      margin-bottom: var(--space-sm);
+      font-family: var(--font-mono);
+    }
+
+    .pill.recommended {
+      background: rgba(0, 255, 65, 0.1);
+      color: var(--neon-green);
+      border-color: rgba(0, 255, 65, 0.3);
+    }
+
+    /* Callouts */
+    .callout {
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin: var(--space-lg) 0;
+      border-left: 4px solid var(--info);
+      background: rgba(0, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .callout.warn {
+      border-left-color: var(--warning);
+      background: rgba(255, 170, 0, 0.05);
+    }
+
+    .callout.success {
+      border-left-color: var(--success);
+      background: rgba(0, 255, 136, 0.05);
+    }
+
+    .callout.error {
+      border-left-color: var(--error);
+      background: rgba(255, 71, 87, 0.05);
+    }
+
+    /* Details/Summary */
+    details {
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      margin: var(--space-lg) 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    details[open] {
+      box-shadow: var(--shadow-md);
+    }
+
+    summary {
+      padding: var(--space-lg);
+      cursor: pointer;
+      color: var(--text-accent);
+      font-weight: 600;
+      background: rgba(0, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    summary:hover {
+      background: rgba(0, 255, 255, 0.1);
+    }
+
+    summary::before {
+      content: '▶';
+      font-family: var(--font-mono);
+      transition: transform 0.3s ease;
+    }
+
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    details > *:not(summary) {
+      padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
+    }
+
+    /* Progress Indicator */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: var(--gradient-accent);
+      z-index: 1000;
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: var(--space-lg) var(--space-md);
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+      }
+
+      .card {
+        padding: var(--space-lg);
+      }
+
+      .toc {
+        position: static;
+        margin-bottom: var(--space-xl);
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-surface);
+      border-radius: 6px;
+      border: 2px solid var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Selection */
+    ::selection {
+      background: rgba(0, 255, 255, 0.3);
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar" id="progress"></div>
+  
+  <div class="container">
+    <header class="header">
+      <h1>RangerEye</h1>
+      <p class="subtitle">Purpose‑built guide for a Pi 5 NVR in a 2024 Ford Ranger with ESP32‑CAM modules. Designed for offline resilience, easy serviceability, and clean wiring.</p>
+      <div class="version-badge">
+        <div class="status-indicator"></div>
+        <span>v2.0 • field‑ops edition</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <nav class="card toc">
+        <h2>Mission Control</h2>
+        <ul class="toc-list">
+          <li class="toc-item"><a href="#naming" class="toc-link" data-step="01">System Designation</a></li>
+          <li class="toc-item"><a href="#bom" class="toc-link" data-step="02">Hardware Manifest</a></li>
+          <li class="toc-item"><a href="#storage" class="toc-link" data-step="03">Storage Architecture</a></li>
+          <li class="toc-item"><a href="#flash-cams" class="toc-link" data-step="04">Camera Firmware</a></li>
+          <li class="toc-item"><a href="#network" class="toc-link" data-step="05">Network Topology</a></li>
+          <li class="toc-item"><a href="#rpi-os" class="toc-link" data-step="06">OS Configuration</a></li>
+          <li class="toc-item"><a href="#nvr" class="toc-link" data-step="07">NVR Deployment</a></li>
+          <li class="toc-item"><a href="#add-cams" class="toc-link" data-step="08">Camera Integration</a></li>
+          <li class="toc-item"><a href="#retention" class="toc-link" data-step="09">Data Retention</a></li>
+          <li class="toc-item"><a href="#power" class="toc-link" data-step="10">Power Systems</a></li>
+          <li class="toc-item"><a href="#mounting" class="toc-link" data-step="11">Physical Integration</a></li>
+          <li class="toc-item"><a href="#maint" class="toc-link" data-step="12">System Maintenance</a></li>
+          <li class="toc-item"><a href="#roadmap" class="toc-link" data-step="13">Future Enhancements</a></li>
+        </ul>
+      </nav>
+
+      <main class="content">
+        <section class="card" id="naming">
+          <h2>System Designation</h2>
+          <p>Choose a tactical identifier for consistent system naming across logs, SSIDs, and hostnames.</p>
+          
+          <div class="callout success">
+            <strong>Primary Recommendation:</strong> <code>RangerEye</code> — hostname: <code>rangereye</code>, SSID: <code>RangerEye‑Network</code>
+          </div>
+          
+          <p><strong>Alternative Designations:</strong></p>
+          <ul>
+            <li><span class="pill">Tactical</span> <em>Overwatch</em></li>
+            <li><span class="pill">Stealth</span> <em>RoadWarden</em></li>
+            <li><span class="pill">Classic</span> <em>BlackBox Ranger</em></li>
+            <li><span class="pill">Minimal</span> <em>RNVRS</em></li>
+            <li><span class="pill">Retro</span> <em>Project Tailgunner</em></li>
+          </ul>
+
+          <div class="callout">
+            <strong>Operational Note:</strong> Apply your chosen designation to a label inside the Pi enclosure and stencil the abbreviated form on camera housings for field identification.
+          </div>
+        </section>
+      </main>
+    </div>
+
+    </div>
+
+    <section class="card" id="bom">
+      <h2>Hardware Manifest</h2>
+      <p>Minimum viable system components for reliable in-vehicle operation.</p>
+
+      <details open>
+        <summary>Core Processing Unit</summary>
+        <ul>
+          <li>Raspberry Pi 5 (8GB preferred) with active thermal management</li>
+          <li>High-endurance 64GB microSD (OS partition only)</li>
+          <li>Official Pi 5 active cooler or equivalent CFM-rated solution</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Storage Subsystem</summary>
+        <ul>
+          <li><strong>Option A (Recommended):</strong> Pi 5 M.2 NVMe HAT + 2280 NVMe SSD (256-512GB)</li>
+          <li><strong>Option B (Simplified):</strong> USB 3.2 portable SSD or SATA enclosure (256-512GB)</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Imaging Array</summary>
+        <ul>
+          <li>2× ESP32‑CAM (OV2640) modules with integrated antenna</li>
+          <li>Expansion capability for 4-camera configuration</li>
+          <li>FTDI/USB‑TTL programmer (3.3V logic level)</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Power Distribution</summary>
+        <ul>
+          <li>Primary: Portable power station with USB-C PD output</li>
+          <li>Alternative: Fused 5V buck converter from 12V vehicle power</li>
+          <li>In-line 3A fuse for Pi/SSD power branch</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Integration Hardware</summary>
+        <ul>
+          <li>Dupont jumper leads and JST 2-pin connectors</li>
+          <li>Acrylic Pi case with LED accent panel</li>
+          <li>Custom ESP32-CAM enclosures with thermal management</li>
+          <li>Vehicle-grade wire management and protective sleeving</li>
+        </ul>
+      </details>
+
+      <div class="callout warn">
+        <strong>Critical Advisory:</strong> Proper fusing prevents catastrophic component failure. Never skip the inline protection on power distribution branches.
+      </div>
+    </section>
+
+    <section class="card" id="storage">
+      <h2>Storage Architecture</h2>
+      <p>Dual-tier storage strategy: SD for OS stability, NVMe/SSD for high-performance video recording.</p>
+
+      <details open>
+        <summary>Physical Installation</summary>
+        <div class="callout">
+          <strong>NVMe HAT:</strong> Power down system, mount HAT with proper standoffs, seat NVMe drive, connect PCIe ribbon cable per manufacturer specifications, verify thermal clearance for active cooling.
+        </div>
+        <div class="callout">
+          <strong>USB SSD:</strong> Connect to USB 3.0 port (blue connector), secure with adhesive cable management, consider 2.5" drive cradle for shock protection.
+        </div>
+      </details>
+
+      <details>
+        <summary>Filesystem Configuration</summary>
+        <pre><code># Identify target storage device
+sudo lsblk -o NAME,MODEL,SIZE,FSTYPE,MOUNTPOINT
+
+# Create optimized ext4 filesystem
+sudo mkfs.ext4 -L RANGEREYE /dev/nvme0n1p1
+
+# Configure persistent mount point
+sudo mkdir -p /mnt/rangereye
+sudo blkid /dev/nvme0n1p1  # Note UUID for fstab
+
+# Add to filesystem table with performance optimizations
+echo 'UUID=your-uuid-here /mnt/rangereye ext4 noatime,nodiratime,defaults 0 2' | sudo tee -a /etc/fstab
+
+# Mount and create directory structure
+sudo mount -a && sudo mkdir -p /mnt/rangereye/{video,db,logs}</code></pre>
+      </details>
+
+      <details>
+        <summary>Longevity Optimization</summary>
+        <ul>
+          <li>Enable <code>noatime,nodiratime</code> mount options to reduce write cycles</li>
+          <li>Configure motion-based recording with aggressive pruning policies</li>
+          <li>Implement log rotation to prevent runaway disk usage</li>
+          <li>Monitor SSD health with periodic SMART attribute checks</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="card" id="flash-cams">
+      <h2>Camera Firmware</h2>
+      <p>Two deployment strategies: Arduino IDE for simplicity, ESPHome for advanced OTA management.</p>
+
+      <details open>
+        <summary>Arduino IDE Deployment</summary>
+        <ol>
+          <li>Install Arduino IDE with ESP32 board package via Board Manager</li>
+          <li>Load example: <span class="pill">File → Examples → ESP32 → Camera → CameraWebServer</span></li>
+          <li>Configure board: <span class="pill">AI Thinker ESP32-CAM</span>, Upload Speed: 115200</li>
+          <li>Modify WiFi credentials for your network topology</li>
+          <li>Wire FTDI programmer: <code>U0T↔U0R</code>, <code>U0R↔U0T</code>, <code>GND↔GND</code>, <code>5V↔5V</code></li>
+          <li>Enter flash mode: hold <code>GPIO0→GND</code> during power-on, pulse RESET if required</li>
+          <li>Upload firmware and note assigned IP address from Serial Monitor</li>
+        </ol>
+        
+        <div class="callout success">
+          Stream endpoints: <code>http://&lt;IP&gt;:81/stream</code> (MJPEG), <code>http://&lt;IP&gt;/capture</code> (snapshot)
+        </div>
+        
+        <div class="callout">
+          <strong>Need More Control?</strong> Check out our <a href="arduino-advanced.html" style="color: var(--neon-pink); font-weight: 600;">Advanced Arduino IDE Guide</a> for custom firmware optimization, OTA updates, debugging techniques, and performance tuning.
+        </div>
+      </details>
+
+      <details>
+        <summary>ESPHome Configuration</summary>
+        <pre><code>esphome:
+  name: rangereye-cam-01
+  platform: ESP32
+  board: esp32cam
+
+wifi:
+  ssid: "RangerEye-Network"
+  password: "your-secure-passphrase"
+  manual_ip:
+    static_ip: 10.42.0.21
+    gateway: 10.42.0.1
+    subnet: 255.255.255.0
+
+logger:
+api:
+ota:
+
+esp32_camera:
+  name: "Front Camera"
+  external_clock:
+    pin: GPIO0
+    frequency: 20MHz
+  i2c_pins:
+    sda: GPIO26
+    scl: GPIO27
+  data_pins: [GPIO5, GPIO18, GPIO19, GPIO21, GPIO36, GPIO39, GPIO34, GPIO35]
+  vsync_pin: GPIO25
+  href_pin: GPIO23
+  pixel_clock_pin: GPIO22
+  power_down_pin: GPIO32
+  resolution: 1280x720
+  jpeg_quality: 12</code></pre>
+      </details>
+
+      <details>
+        <summary>Power Distribution Strategy</summary>
+        <div class="callout warn">
+          <strong>Thermal Management Critical:</strong> ESP32-CAM modules generate significant heat. Implement ventilated enclosures and avoid direct solar exposure on image sensors.
+        </div>
+        <ul>
+          <li><strong>Dedicated Supply:</strong> 5V 3A buck converter with individual JST distribution</li>
+          <li><strong>Pi Rail Power:</strong> GPIO pins 2/4 (5V) and 6 (GND), limit total camera draw &lt;800mA</li>
+          <li><strong>Decoupling:</strong> 100µF electrolytic capacitor across each module's power input</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="card" id="network">
+      <h2>Network Topology</h2>
+      <p>Self-contained WiFi access point for complete operational independence.</p>
+
+      <details open>
+        <summary>Access Point Configuration</summary>
+        <pre><code># System preparation
+sudo apt update && sudo apt -y full-upgrade
+sudo apt -y install hostapd dnsmasq iptables-persistent
+
+# Enable hostapd service
+sudo systemctl unmask hostapd && sudo systemctl enable hostapd
+
+# Configure static IP for wireless interface
+echo -e "interface wlan0\nstatic ip_address=10.42.0.1/24\nnohook wpa_supplicant" | sudo tee -a /etc/dhcpcd.conf
+sudo service dhcpcd restart
+
+# DHCP server configuration
+echo -e "interface=wlan0\ndhcp-range=10.42.0.50,10.42.0.150,255.255.255.0,24h" | sudo tee /etc/dnsmasq.d/rangereye.conf
+sudo systemctl restart dnsmasq
+
+# Access point parameters
+cat << 'EOF' | sudo tee /etc/hostapd/hostapd.conf
+interface=wlan0
+ssid=RangerEye-Network
+hw_mode=g
+channel=6
+wmm_enabled=1
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=SecureRangerAccess2024
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+EOF
+
+# Link configuration and start service
+echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee -a /etc/default/hostapd
+sudo systemctl enable --now hostapd</code></pre>
+      </details>
+
+      <div class="callout">
+        <strong>Operational Philosophy:</strong> Air-gapped by design. No internet bridging maintains operational security and eliminates external dependencies.
+      </div>
+    </section>
+
+    <section class="card" id="rpi-os">
+      <h2>OS Configuration</h2>
+      <p>Hardened Raspberry Pi OS deployment with security best practices.</p>
+
+      <details open>
+        <summary>Base System Setup</summary>
+        <ol>
+          <li>Flash 64-bit Raspberry Pi OS with SSH enabled and custom hostname <code>rangereye</code></li>
+          <li>Initial configuration: <code>sudo raspi-config</code> → update passwords, set timezone, enable SSH</li>
+          <li>System update: <code>sudo apt update && sudo apt -y full-upgrade</code></li>
+          <li>Create administrative user with sudo privileges, disable default <code>pi</code> account</li>
+          <li>Essential packages: <code>sudo apt -y install git curl htop tmux jq pciutils ufw</code></li>
+          <li>NVMe support: <code>sudo rpi-eeprom-update -a</code> → reboot for firmware updates</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Security Hardening</summary>
+        <pre><code># Firewall configuration
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp                    # SSH access
+sudo ufw allow 80,443,8080,8765/tcp     # Web services
+sudo ufw allow from 10.42.0.0/24        # Local network
+sudo ufw enable
+
+# Disable password authentication for SSH (after key setup)
+sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+sudo systemctl restart ssh</code></pre>
+      </details>
+
+      <details>
+        <summary>Offline Timekeeping (Optional)</summary>
+        <p>DS3231 RTC module for accurate timestamps without internet connectivity:</p>
+        <ol>
+          <li>Enable I2C: <code>sudo raspi-config</code> → Interface Options → I2C</li>
+          <li>Add overlay to <code>/boot/firmware/config.txt</code>: <code>dtoverlay=i2c-rtc,ds3231</code></li>
+          <li>Disable fake-hwclock: <code>sudo systemctl disable fake-hwclock</code></li>
+          <li>Set time: <code>sudo date -s 'YYYY-MM-DD HH:MM:SS' && sudo hwclock -w</code></li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="card" id="nvr">
+      <h2>NVR Deployment</h2>
+      <p>Containerized video management with multiple software options for different use cases.</p>
+
+      <details open>
+        <summary>Shinobi (Recommended)</summary>
+        <pre><code># Docker installation
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER && newgrp docker
+sudo apt -y install docker-compose-plugin
+
+# Create deployment directory and configuration
+mkdir -p ~/nvr/shinobi && cd ~/nvr/shinobi
+cat << 'YAML' > compose.yml
+services:
+  shinobi:
+    image: registry.gitlab.com/shinobi-systems/shinobi:latest
+    container_name: shinobi-nvr
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=SecureAdminPass2024
+    volumes:
+      - /mnt/rangereye/video:/opt/shinobi/videos
+      - /mnt/rangereye/db:/var/lib/mysql
+      - /mnt/rangereye/logs:/var/lib/shinobi/log
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+YAML
+
+# Deploy service
+docker compose up -d
+docker compose logs -f  # Monitor startup</code></pre>
+        <div class="callout success">
+          Access web interface: <code>http://10.42.0.1:8080</code>
+        </div>
+      </details>
+
+      <details>
+        <summary>MotionEye (Simplified)</summary>
+        <pre><code>mkdir -p ~/nvr/motioneye && cd ~/nvr/motioneye
+cat << 'YAML' > compose.yml
+services:
+  motioneye:
+    image: ccrisan/motioneye:master-armhf
+    container_name: motioneye-nvr
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/rangereye/video:/var/lib/motioneye
+      - /mnt/rangereye/config:/etc/motioneye
+    environment:
+      - TZ=America/Chicago
+YAML
+
+docker compose up -d</code></pre>
+        <div class="callout">
+          Access: <code>http://10.42.0.1:8765</code> (admin/blank password initially)
+        </div>
+      </details>
+    </section>
+
+    <section class="card" id="add-cams">
+      <h2>Camera Integration</h2>
+      <p>Stream configuration and optimization for reliable video capture.</p>
+
+      <h3>Stream Endpoints</h3>
+      <ul>
+        <li><strong>ESP32 Arduino:</strong> <code>http://10.42.0.21:81/stream</code> (MJPEG)</li>
+        <li><strong>ESPHome RTSP:</strong> <code>rtsp://10.42.0.21:8554/stream</code></li>
+        <li><strong>Snapshots:</strong> <code>http://10.42.0.21/capture</code></li>
+      </ul>
+
+      <details>
+        <summary>Shinobi Camera Configuration</summary>
+        <ol>
+          <li>Navigate to Monitor Management → Add Monitor</li>
+          <li>Set Type: <em>Remote</em>, Input: <em>MJPEG</em></li>
+          <li>Stream URL: <code>http://10.42.0.21:81/stream</code></li>
+          <li>Configure recording: Motion detection with 30-second pre/post buffers</li>
+          <li>Storage path: <code>/opt/shinobi/videos/cam-front</code></li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Performance Optimization</summary>
+        <div class="callout warn">
+          <strong>Bandwidth Management:</strong> Start with 720p@10fps. ESP32-CAM WiFi stability is more critical than pixel density.
+        </div>
+        <ul>
+          <li>Use WiFi channels 1, 6, or 11 to avoid interference</li>
+          <li>Position cameras to minimize metal obstruction of antennas</li>
+          <li>Configure motion masks to exclude dashboard and hood areas</li>
+          <li>Implement progressive quality scaling based on storage availability</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="card" id="retention">
+      <h2>Data Retention</h2>
+      <p>Storage capacity planning and automated lifecycle management.</p>
+
+      <h3>Capacity Calculations</h3>
+      <div class="callout">
+        <strong>Baseline:</strong> 720p MJPEG @ 10fps ≈ 500KB/s per camera<br>
+        <strong>Two cameras:</strong> ~1MB/s = 86GB/day continuous<br>
+        <strong>Motion-only:</strong> 60-90% reduction when stationary
+      </div>
+
+      <details open>
+        <summary>Storage Scenarios</summary>
+        <ul>
+          <li><strong>256GB NVMe:</strong> Motion-only → 5-8 days retention</li>
+          <li><strong>512GB NVMe:</strong> Motion-only → 10-16 days retention</li>
+          <li><strong>1TB NVMe:</strong> Motion-only → 20-32 days retention</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Automated Pruning Strategy</summary>
+        <pre><code># Shinobi retention policy
+{
+  "auto_delete": true,
+  "auto_delete_days": 7,
+  "disk_usage_max": 80,
+  "delete_motionless_videos": true,
+  "delete_motionless_days": 2
+}</code></pre>
+      </details>
+    </section>
+
+    <section class="card" id="power">
+      <h2>Power Systems</h2>
+      <p>Electrical load analysis and thermal management for mobile deployment.</p>
+
+      <h3>Power Budget</h3>
+      <ul>
+        <li><strong>Raspberry Pi 5 + NVMe:</strong> 8-12W typical load</li>
+        <li><strong>ESP32-CAM (each):</strong> 1-1.5W with WiFi transmission peaks</li>
+        <li><strong>LED accents:</strong> 0.5-2W depending on density and brightness</li>
+        <li><strong>Total system:</strong> ~15W continuous, 18W peak</li>
+      </ul>
+
+      <details>
+        <summary>Battery Runtime Analysis</summary>
+        <div class="callout success">
+          <strong>360Wh Portable Power Station:</strong><br>
+          • Continuous operation: ~24 hours<br>
+          • Motion-only recording: ~36-48 hours<br>
+          • Standby mode: ~72+ hours
+        </div>
+      </details>
+
+      <details>
+        <summary>Vehicle Integration</summary>
+        <div class="callout warn">
+          <strong>Safety Requirements:</strong> Use braided wire protection, rubber grommets for panel penetrations, and always fuse power branches near the source.
+        </div>
+        <pre><code># 12V to 5V buck converter sizing
+Input voltage: 12V nominal (10.5V-14.4V operating range)
+Output: 5V @ 4A continuous (20W capacity with margin)
+Fusing: 3A slow-blow at 12V input, 4A fast-blow at 5V output</code></pre>
+      </details>
+    </section>
+
+    <section class="card" id="mounting">
+      <h2>Physical Integration</h2>
+      <p>Professional installation with serviceability and thermal management.</p>
+
+      <details open>
+        <summary>Pi Enclosure Design</summary>
+        <ul>
+          <li>Transparent acrylic window for status LED visibility</li>
+          <li>Integrated 5V LED strip with manual toggle switch</li>
+          <li>Forced air cooling path across NVMe heat spreader</li>
+          <li>Quick-disconnect power and ethernet connections</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Camera Mounting Strategy</summary>
+        <ul>
+          <li>Vented housings with integrated sun shields</li>
+          <li>1/4-20 threaded inserts for universal mounting compatibility</li>
+          <li>Cable management with coiled service loops</li>
+          <li>Removable anti-glare filters for lens protection</li>
+        </ul>
+      </details>
+
+      <div class="callout">
+        <strong>Documentation Standard:</strong> Label all components with system designation and function codes (e.g., <code>RangerEye-PWR</code>, <code>RE-CAM-F</code>, <code>RE-SSD</code>).
+      </div>
+    </section>
+
+    <section class="card" id="maint">
+      <h2>System Maintenance</h2>
+      <p>Operational procedures for monitoring, troubleshooting, and updates.</p>
+
+      <details open>
+        <summary>Health Monitoring</summary>
+        <pre><code># Service status check
+docker ps && docker stats --no-stream
+systemctl status hostapd dnsmasq
+
+# Storage and thermal monitoring  
+df -h /mnt/rangereye && vcgencmd measure_temp
+sudo smartctl -a /dev/nvme0n1  # NVMe health check
+
+# Network diagnostics
+iwconfig wlan0 && ip addr show wlan0</code></pre>
+      </details>
+
+      <details>
+        <summary>Common Issues</summary>
+        <ul>
+          <li><strong>WiFi instability:</strong> Reduce camera framerate, add bulk capacitance, relocate antennas</li>
+          <li><strong>Storage errors:</strong> Check <code>dmesg</code> for I/O errors, verify fstab UUID matches</li>
+          <li><strong>Thermal throttling:</strong> Verify fan operation, clear dust from heatsinks</li>
+          <li><strong>Power brownouts:</strong> Check fuse integrity, measure supply voltage under load</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Update Procedures</summary>
+        <pre><code># System updates (maintenance window)
+sudo apt update && sudo apt -y upgrade
+docker compose pull && docker compose up -d
+
+# Backup critical configurations
+sudo tar -czf ~/backup-$(date +%Y%m%d).tar.gz /etc/hostapd /etc/dnsmasq.d ~/nvr/*/compose.yml</code></pre>
+      </details>
+    </section>
+
+    <section class="card" id="roadmap">
+      <h2>Future Enhancements</h2>
+      <p>Scalability roadmap and advanced feature integration.</p>
+
+      <h3>Phase 2: Full Coverage Array</h3>
+      <ul>
+        <li>Expand to 4-camera configuration (front, rear, left, right)</li>
+        <li>Static IP assignments: .21-.24 for systematic addressing</li>
+        <li>Load balancing across WiFi channels for optimal bandwidth</li>
+      </ul>
+
+      <h3>Phase 3: AI Integration</h3>
+      <ul>
+        <li>Migrate to Frigate NVR with Coral USB TPU acceleration</li>
+        <li>Object detection for person/vehicle/animal classification</li>
+        <li>Smart notifications with confidence scoring</li>
+      </ul>
+
+      <h3>Phase 4: Cloud Integration</h3>
+      <ul>
+        <li>Selective WiFi sync when at home base</li>
+        <li>Encrypted thumbnail uploads to cloud storage</li>
+        <li>Remote monitoring dashboard with cellular backup</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Expansion Philosophy:</strong> Maintain offline-first design with optional connectivity features that enhance but never compromise core functionality.
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // Progress bar animation
+    window.addEventListener('scroll', () => {
+      const progress = document.getElementById('progress');
+      const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+      progress.style.transform = `scaleX(${scrolled / 100})`;
+    });
+
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Add active state to TOC links
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const id = entry.target.getAttribute('id');
+        const tocLink = document.querySelector(`a[href="#${id}"]`);
+        if (entry.isIntersecting) {
+          document.querySelectorAll('.toc-link').forEach(link => link.classList.remove('active'));
+          if (tocLink) tocLink.classList.add('active');
+        }
+      });
+    }, { threshold: 0.7 });
+
+    document.querySelectorAll('section[id]').forEach(section => {
+      observer.observe(section);
+    });
+  </script>
+</body>
+</html>

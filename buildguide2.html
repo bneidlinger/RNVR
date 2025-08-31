@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RangerEye — In‑Vehicle NVR Build Guide (Pi 5 + ESP32‑CAM)</title>
+  <style>
+    :root {
+      --bg: #0f1115; --panel:#151821; --muted:#8a90a6; --text:#e6e8ef; --accent:#6cf; --ok:#6fcf97; --warn:#f2c94c; --bad:#eb5757;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 1040px; margin: 2rem auto; padding: 0 1rem; }
+    header { display:flex; gap:1rem; align-items:center; }
+    header h1 { margin:0; font-size: clamp(1.6rem, 2.4vw, 2.2rem); letter-spacing: .3px; }
+    .tag { background: #1b2030; color: var(--muted); border:1px solid #22283a; padding:.25rem .5rem; border-radius:999px; font-size:.85rem }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 860px) { .grid { grid-template-columns: 2fr 1fr; } }
+    .card { background: var(--panel); border:1px solid #21273a; border-radius:16px; padding:1rem 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .muted { color: var(--muted); }
+    h2 { margin-top: 1.2rem; font-size: 1.25rem; border-left: 4px solid #22314f; padding-left:.65rem; }
+    h3 { margin-top: 1rem; font-size: 1.05rem; color: #cbd8ff; }
+    code, pre { font-family: var(--mono); }
+    pre { background:#0b0d12; border:1px solid #1f2333; padding: .85rem; border-radius: 12px; overflow:auto; }
+    .toc a { display:block; padding:.35rem .5rem; border-radius:8px; }
+    .toc a:hover { background:#1b2235; }
+    .kbd { font-family: var(--mono); background:#1b2133; border:1px solid #28314b; padding:.1rem .35rem; border-radius:6px; }
+    .callout { border-left: 3px solid var(--accent); padding:.5rem .75rem; background:#101523; border-radius:8px; }
+    .callout.warn { border-left-color: var(--warn); }
+    .callout.ok { border-left-color: var(--ok); }
+    .pill { display:inline-block; font-size:.8rem; padding:.15rem .5rem; border-radius:999px; background:#0f1424; border:1px solid #28314b; color:#cfe1ff; margin-right:.35rem; }
+    ul.tight>li{ margin:.25rem 0; }
+    .foot { color:#98a0b8; font-size:.9rem; }
+    .hr { height:1px; background:linear-gradient(90deg, transparent, #233055, transparent); margin:1rem 0; border:0; }
+    .flex { display:flex; gap: .5rem; align-items:center; flex-wrap:wrap; }
+    .step { counter-increment: step; }
+    .step h3::before { content: counter(step) ". "; color:#8fb6ff; }
+    .checkbox { filter: grayscale(1) brightness(1.2); width: 14px; height:14px; border:1px solid #3a4260; display:inline-block; border-radius:3px; margin-right:.45rem; }
+    details { background:#111624; border: 1px solid #21273a; border-radius:12px; padding:.5rem .8rem; }
+    details summary { cursor:pointer; color:#dfe6ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>RangerEye — In‑Vehicle NVR Build Guide (Pi 5 + ESP32‑CAM)</h1>
+      <span class="tag">v1.0 • field‑ops edition</span>
+    </header>
+
+    <p class="muted">Purpose‑built guide for a Pi 5 NVR in a 2024 Ford Ranger with ESP32‑CAM modules. Designed for offline resilience, easy serviceability, and clean wiring. Includes AP mode (self‑contained), Dockerized NVR, and retention tuning.</p>
+
+    <div class="grid">
+      <nav class="card toc">
+        <h2>Contents</h2>
+        <a href="#naming">1. Choose a system name</a>
+        <a href="#bom">2. Bill of Materials</a>
+        <a href="#storage">3. Storage plan (SD + NVMe/SSD)</a>
+        <a href="#flash-cams">4. Flash & configure ESP32‑CAM (video streaming)</a>
+        <a href="#network">5. Network topology (Pi AP — offline)</a>
+        <a href="#rpi-os">6. Raspberry Pi OS install & hardening</a>
+        <a href="#nvr">7. NVR software (Shinobi/MotionEye/Frigate)</a>
+        <a href="#add-cams">8. Add cameras & tune</a>
+        <a href="#retention">9. Retention & storage math</a>
+        <a href="#power">10. Power & thermal budget</a>
+        <a href="#mounting">11. Mounting, cases & LEDs</a>
+        <a href="#maint">12. Maintenance & troubleshooting</a>
+        <a href="#roadmap">13. Roadmap (4‑cam, AI, cloud)</a>
+        <a href="#appendix">Appendix: Wiring diagrams & configs</a>
+      </nav>
+
+      <section class="card">
+        <h2 id="naming">1) Choose a system name</h2>
+        <p class="muted">Pick one so your logs, SSIDs, and hostnames look intentional, not like a droid with an identity crisis.</p>
+        <ul>
+          <li><span class="pill">Recommended</span><strong>RangerEye</strong> — hostname: <code>rangereye</code>, SSID: <code>RangerEye‑AP</code></li>
+          <li>Alternatives: <em>Overwatch</em>, <em>RoadWarden</em>, <em>BlackBox Ranger</em>, <em>RNVRS</em>, <em>Project Tailgunner</em></li>
+        </ul>
+        <div class="callout">Operator note: whatever you choose, stick it on a label inside the Pi case and stencil the short name on the cam housings.</div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2 id="bom">2) Bill of Materials (minimum viable)</h2>
+      <ul>
+        <li>Raspberry Pi 5 (8 GB preferred) + active cooling (fan or blower)</li>
+        <li>64 GB microSD (OS only)</li>
+        <li>Storage Option A (cleanest): Pi 5 M.2 NVMe HAT + 2280 NVMe SSD (128–512 GB)</li>
+        <li>Storage Option B (simpler): USB 3.2 portable SSD or SATA enclosure (128–512 GB)</li>
+        <li>2× ESP32‑CAM (OV2640) modules (plan for 4 later)</li>
+        <li>5 V power: either from SOLIX via USB‑C PD or a fused 5 V buck converter (if tapping 12 V)</li>
+        <li>FTDI/USB‑TTL (3.3 V) for flashing ESP32‑CAM</li>
+        <li>Jumper wires, Dupont leads, small 2‑pin JSTs (for neat power runs)</li>
+        <li>Acrylic side panel for Pi case + low‑density LED strip (5 V)</li>
+        <li>3D‑printed cases for ESP32‑CAM with ventilation + sunshades</li>
+      </ul>
+      <div class="callout warn"><strong>HK‑47 Advisory:</strong> organics frequently forget fuses. In‑line 2–3 A fuse on the Pi/SSD branch prevents the smell of cooked silicon.</div>
+    </section>
+
+    <section class="card">
+      <h2 id="storage">3) Storage plan (SD boot + NVMe/SSD media)</h2>
+      <p>Keep the microSD read‑mostly for the OS. Put all video on NVMe/SSD for endurance and speed.</p>
+
+      <details open>
+        <summary><strong>3.1 Physically install storage</strong></summary>
+        <ul class="tight">
+          <li><strong>NVMe HAT</strong>: power off; mount HAT; seat NVMe; secure with standoff; connect ribbon/PCIe cable per HAT docs; ensure fan clearance.</li>
+          <li><strong>USB SSD</strong>: plug into a blue USB 3 port; secure with short USB cable and adhesive mounts or a 2.5″ cradle.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary><strong>3.2 Format & mount at boot</strong> (ext4 at <code>/mnt/rangereye</code>)</summary>
+<pre><code class="language-bash"># List disks; identify your NVMe (e.g., /dev/nvme0n1) or USB (e.g., /dev/sda)
+sudo lsblk -o NAME,MODEL,SIZE,FSTYPE,MOUNTPOINT
+
+# Create a single partition if blank (optional)
+# sudo parted /dev/nvme0n1 -- mklabel gpt
+# sudo parted -a optimal /dev/nvme0n1 -- mkpart primary ext4 0% 100%
+
+# Format (WARNING: wipes target)
+sudo mkfs.ext4 -L RANGEREYE /dev/nvme0n1p1
+
+# Create mount point
+sudo mkdir -p /mnt/rangereye
+
+# Get UUID for fstab
+sudo blkid /dev/nvme0n1p1
+# Example output: UUID="1111-2222-3333-4444"
+
+# Add to /etc/fstab (one line)
+echo 'UUID=1111-2222-3333-4444 /mnt/rangereye ext4 noatime,nodiratime,defaults 0 2' | sudo tee -a /etc/fstab
+
+# Mount and verify
+sudo mount -a && df -h | grep rangereye
+
+# Create folders for NVR
+sudo mkdir -p /mnt/rangereye/{video,db,logs}
+</code></pre>
+      </details>
+
+      <details>
+        <summary><strong>3.3 Optional: tune SSD for longevity</strong></summary>
+        <ul>
+          <li>Use <code>noatime,nodiratime</code> mount options (above).</li>
+          <li>Set NVR to record only motion or low fps time‑lapse + motion.</li>
+          <li>Prune aggressively (see Retention section).</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2 id="flash-cams">4) Flash & configure ESP32‑CAM (video streaming)</h2>
+      <p>Two proven approaches below. Start with the stock MJPEG web server for maximum compatibility; upgrade later if you want RTSP.</p>
+
+      <details open>
+        <summary><strong>4A. Arduino IDE — ESP32 Camera Web Server (MJPEG)</strong></summary>
+        <ol>
+          <li>Install Arduino IDE + ESP32 board support (Board Manager → add ESP32 platform).</li>
+          <li>Open example: <span class="kbd">File → Examples → ESP32 → Camera → CameraWebServer</span>.</li>
+          <li>Select board: <span class="kbd">AI Thinker ESP32‑CAM</span>. Set Upload Speed 115200.</li>
+          <li>Edit <code>ssid</code>/<code>password</code> to your chosen Wi‑Fi (either your AP or truck hotspot).</li>
+          <li>Wire FTDI (3.3 V logic!) to module: <code>U0T→U0R</code>, <code>U0R→U0T</code>, <code>GND→GND</code>, <code>5V→5V</code>.
+            <ul>
+              <li>Hold <code>GPIO0→GND</code> during power‑up to enter flash mode. Tap RESET if needed.</li>
+            </ul>
+          </li>
+          <li>Upload. Open Serial Monitor @ 115200; note the assigned IP.</li>
+          <li>Browse to <code>http://&lt;CAM_IP&gt;/</code>. Start stream (usually MJPEG at <code>http://&lt;CAM_IP&gt;:81/stream</code>). Snapshot at <code>/capture</code>.</li>
+        </ol>
+        <div class="callout ok">Works with most NVRs as an <strong>HTTP/MJPEG</strong> source. Simple and reliable.</div>
+      </details>
+
+      <details>
+        <summary><strong>4B. ESPHome (optional) — single YAML, OTA updates</strong></summary>
+<pre><code class="language-yaml">esphome:
+  name: cam‑front
+  platform: ESP32
+  board: esp32cam
+
+wifi:
+  ssid: "RangerEye-AP"    # or your hotspot
+  password: "change‑me"
+  manual_ip:
+    static_ip: 10.42.0.21
+    gateway: 10.42.0.1
+    subnet: 255.255.255.0
+
+logger:
+api:
+ota:
+
+esp32_camera:
+  name: cam‑front
+  external_clock:
+    pin: GPIO0
+    frequency: 20MHz
+  i2c_pins:
+    sda: GPIO26
+    scl: GPIO27
+  data_pins: [GPIO5, GPIO18, GPIO19, GPIO21, GPIO36, GPIO39, GPIO34, GPIO35]
+  vsync_pin: GPIO25
+  href_pin: GPIO23
+  pixel_clock_pin: GPIO22
+  power_down_pin: GPIO32
+  resolution: 1280x720
+  jpeg_quality: 12
+
+# If RTSP available in your ESPHome version
+#rtsp_server:
+#  port: 8554
+</code></pre>
+        <p class="muted">If your ESPHome build includes <code>rtsp_server</code>, your stream will be <code>rtsp://&lt;CAM_IP&gt;:8554/stream</code>. Otherwise, use the MJPEG web stream.</p>
+      </details>
+
+      <details>
+        <summary><strong>4C. Powering the ESP32‑CAMs (clean)</strong></summary>
+        <ul>
+          <li>Preferred: power cams from a dedicated 5 V buck (3 A) off SOLIX → split to each cam via JST or terminal block.</li>
+          <li>Alternate: Pi 5 5 V rail (Pins 2/4); ground to Pin 6. Keep total draw &lt; 800 mA on the 5 V rail for cams to avoid brownouts.</li>
+          <li>Add 100 µF electrolytic across each cam’s 5V/GND near the module to smooth spikes.</li>
+        </ul>
+      </details>
+
+      <div class="callout warn"><strong>Common gotcha:</strong> ESP32‑CAMs run hot. Use vented cases and avoid direct sun on the sensor. If Wi‑Fi drops, reduce bitrate/resolution and add local bulk capacitance.</div>
+    </section>
+
+    <section class="card">
+      <h2 id="network">5) Network Topology</h2>
+      <p>Two modes: self‑contained AP (no external infra) or join an existing hotspot/router.</p>
+
+      <details open>
+        <summary><strong>5A. Pi as Wi‑Fi Access Point (recommended, fully offline)</strong></summary>
+<pre><code class="language-bash"># Update base system
+sudo apt update && sudo apt -y full-upgrade
+
+# Install AP + DHCP components
+sudo apt -y install hostapd dnsmasq iptables-persistent
+sudo systemctl unmask hostapd && sudo systemctl enable hostapd
+
+# Static IP on wlan0
+echo -e "interface wlan0\nstatic ip_address=10.42.0.1/24\nnohook wpa_supplicant" | sudo tee -a /etc/dhcpcd.conf
+sudo service dhcpcd restart
+
+# dnsmasq config (DHCP on AP subnet)
+echo -e "interface=wlan0\ndhcp-range=10.42.0.50,10.42.0.150,255.255.255.0,24h" | sudo tee /etc/dnsmasq.d/rangereye.conf
+sudo systemctl restart dnsmasq
+
+# hostapd config (WPA2 AP)
+cat &lt;&lt; 'EOF' | sudo tee /etc/hostapd/hostapd.conf
+interface=wlan0
+ssid=RangerEye-AP
+hw_mode=g
+channel=6
+wmm_enabled=1
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=ChangeMeNow!
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+EOF
+
+echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee -a /etc/default/hostapd
+sudo systemctl enable --now hostapd
+
+# Leave NAT disabled to keep the system air‑gapped/offline.
+# (If you ever want temporary Internet pass‑through via ethernet, uncomment below)
+# sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+# sudo sh -c "iptables-save > /etc/iptables/rules.v4"
+</code></pre>
+        <p>Cams join <code>RangerEye‑AP</code> → Pi assigns 10.42.0.x → NVR binds to <code>10.42.0.1</code>.</p>
+      </details>
+
+      <div class="callout warn"><strong>Offline by design:</strong> External hotspots are intentionally omitted. RangerEye runs its own AP so cams and your admin device connect directly, even with no upstream network.</div>
+    </section>
+
+    <section class="card">
+      <h2 id="rpi-os">6) Raspberry Pi OS install & hardening</h2>
+      <ol class="tight">
+        <li>Flash 64‑bit Raspberry Pi OS (with or without desktop). Set hostname <code>rangereye</code>, enable SSH.</li>
+        <li>Initial boot: <code>sudo raspi-config</code> → change password, set locale/timezone, enable SSH.</li>
+        <li>System update: <code>sudo apt update && sudo apt -y full-upgrade</code></li>
+        <li>Create a non‑pi admin user, disable password SSH for <code>pi</code> if desired.</li>
+        <li>Install basics: <code>sudo apt -y install git curl htop tmux jq pciutils</code></li>
+        <li>(NVMe) Update EEPROM/firmware: <code>sudo rpi-eeprom-update -a</code> → reboot.</li>
+      </ol>
+      <div class="callout warn">Security: change all default passwords (Pi, AP, NVR UI). Consider <code>ufw</code> allowing only LAN and admin ports.</div>
+    <details>
+  <summary><strong>6.1 Optional: Offline timekeeping (DS3231 RTC)</strong></summary>
+  <ol>
+    <li>Enable I2C: <code>sudo raspi-config</code> → Interface Options → I2C → Enable. <code>sudo apt -y install i2c-tools</code></li>
+    <li>Add overlay: edit <code>/boot/firmware/config.txt</code> and append <code>dtoverlay=i2c-rtc,ds3231</code></li>
+    <li>Disable fake clock: <code>sudo systemctl disable --now fake-hwclock</code>; remove its cron updates: <code>sudo apt -y remove fake-hwclock</code></li>
+    <li>On next boot, sync and write time once: set correct time (<code>sudo date -s '2025-08-28 19:00:00'</code>) then <code>sudo hwclock -w</code></li>
+    <li>(Optional) If you occasionally get Internet, re-enable <code>systemd-timesyncd</code> to auto-correct then <code>sudo hwclock -w</code> to store.</li>
+  </ol>
+</details>
+    </section>
+
+    <section class="card">
+      <h2 id="nvr">7) NVR Software</h2>
+      <p>Pick one. Shinobi (feature‑rich, efficient), MotionEye (simple), Frigate (AI, heavier).</p>
+
+      <details open>
+        <summary><strong>7A. Shinobi (Docker Compose) — recommended</strong></summary>
+<pre><code class="language-bash"># Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER && newgrp docker
+
+# Install Compose plugin
+sudo apt -y install docker-compose-plugin
+
+# Compose file
+mkdir -p ~/nvr/shinobi && cd ~/nvr/shinobi
+cat &lt;&lt; 'YAML' &gt; compose.yml
+services:
+  shinobi:
+    image: registry.gitlab.com/shinobi-systems/shinobi:latest
+    container_name: shinobi
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
+    volumes:
+      - /mnt/rangereye/video:/opt/shinobi/videos
+      - /mnt/rangereye/db:/var/lib/mysql
+      - /mnt/rangereye/logs:/var/lib/shinobi/log
+YAML
+
+docker compose up -d
+# Access UI at http://&lt;PI_IP&gt;:8080 or 80 depending on image; first‑run will guide admin creation.
+</code></pre>
+        <p class="muted">If the image exposes MySQL separately in your version, add a <code>mysql</code> service and link it; many builds ship with MariaDB bundled.</p>
+      </details>
+
+      <details>
+        <summary><strong>7B. MotionEye (Docker) — simpler UI</strong></summary>
+<pre><code class="language-bash">mkdir -p ~/nvr/motioneye && cd ~/nvr/motioneye
+cat &lt;&lt; 'YAML' &gt; compose.yml
+services:
+  motioneye:
+    image: ccrisan/motioneye:master-amd64 # for Pi use the arm64/armhf tag if available
+    container_name: motioneye
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/rangereye/video:/var/lib/motioneye
+    environment:
+      - TZ=America/Chicago
+YAML
+
+docker compose up -d
+# UI usually at http://&lt;PI_IP&gt;:8765 (default admin: admin / empty password)
+</code></pre>
+      </details>
+
+      <details>
+        <summary><strong>7C. Frigate (optional, AI detection)</strong></summary>
+        <p>Great with an external Coral TPU. On Pi 5 CPU‑only, keep resolutions low. Configure <code>cameras:&lt;name&gt;: ffmpeg: inputs:</code> with your stream URLs and set <code>record:</code> retention targets.</p>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2 id="add-cams">8) Add cameras & tune</h2>
+      <h3>8.1 Stream URLs</h3>
+      <ul>
+        <li><strong>ESP32 Camera Web Server (example)</strong>: MJPEG stream at <code>http://&lt;IP&gt;:81/stream</code>, snapshot at <code>http://&lt;IP&gt;/capture</code></li>
+        <li><strong>ESPHome RTSP (if enabled)</strong>: <code>rtsp://&lt;IP&gt;:8554/stream</code></li>
+      </ul>
+
+      <h3>8.2 Shinobi (example) — add camera</h3>
+      <ol>
+        <li>Login → <em>Add Monitor</em>.</li>
+        <li>Type: <em>Remote</em>. Input: <em>MJPEG</em> (or RTSP/Custom).</li>
+        <li>URL: <code>http://10.42.0.21:81/stream</code> (adjust per cam).</li>
+        <li>Recording: Motion‑based or continuous + detector.</li>
+        <li>Storage: set to <code>/opt/shinobi/videos/&lt;cam‑name&gt;</code> (mapped to NVMe).</li>
+      </ol>
+
+      <h3>8.3 MotionEye (example) — add network cam</h3>
+      <ol>
+        <li>Video Device → <em>Network Camera</em>.</li>
+        <li>URL: <code>http://10.42.0.22:81/stream</code> or RTSP if available.</li>
+        <li>Set frame rate (8–12 fps good for in‑vehicle) and resolution (720p to start).</li>
+        <li>Enable Motion Detection → tweak threshold, noise, and masks.</li>
+      </ol>
+
+      <details>
+        <summary><strong>8.4 Quality & bandwidth tips</strong></summary>
+        <ul>
+          <li>Start 720p @ 10 fps; bump slowly if Wi‑Fi stays solid.</li>
+          <li>Use unique channels (1/6/11) if interference; prefer AP mode.</li>
+          <li>ESP32‑CAM bitrate is limited; prioritize stability over pixels.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2 id="retention">9) Retention & storage math (rule‑of‑thumb)</h2>
+      <p>Approx MJPEG @ 720p/10 fps per cam ≈ 500 KB/s (varies wildly). Two cams ≈ 1 MB/s = 3.6 GB/hr ≈ 86 GB/day. Motion‑only reduces by 60–90% when parked.</p>
+      <ul>
+        <li><strong>128 GB NVMe:</strong> motion‑only → ~2–4 days typical</li>
+        <li><strong>256 GB NVMe:</strong> motion‑only → ~5–8 days</li>
+        <li><strong>512 GB NVMe:</strong> motion‑only → ~10–16 days</li>
+      </ul>
+      <div class="callout ok">Tune NVR to prune: keep last N days or max size (e.g., 80% of disk), then auto‑delete oldest.</div>
+    </section>
+
+    <section class="card">
+      <h2 id="power">10) Power & thermal budget</h2>
+      <ul>
+        <li><strong>Pi 5 + NVMe</strong>: 6–10 W typical</li>
+        <li><strong>ESP32‑CAM</strong>: ~1 W each (peaks higher on Wi‑Fi bursts)</li>
+        <li><strong>LED strip (short)</strong>: 0.5–2 W (depends on density/brightness)</li>
+      </ul>
+      <p>Budget ~15 W. A 360 Wh SOLIX yields ~24 hours continuous; motion‑only extends runtime. Add active cooling; keep intake away from direct sun.</p>
+      <div class="callout warn">Vehicle safety: protect runs with braided sleeving; use grommets at pass‑throughs; add an inline fuse near the power source.</div>
+    </section>
+
+    <section class="card">
+      <h2 id="mounting">11) Mounting, cases & LEDs</h2>
+      <ul>
+        <li>Pi case: acrylic window with a low‑density LED strip (wired to 5 V with a toggle). Ensure airflow path across NVMe HAT heatsink.</li>
+        <li>ESP32‑CAM housings: include vents and a small sunshade; add 1/4‑20 nut insert for flexible mounts.</li>
+        <li>Use adhesive‑backed cable tie mounts and short JST pigtails for modular service.</li>
+      </ul>
+      <div class="callout">Label everything: <code>RangerEye‑PWR</code>, <code>RangerEye‑SSD</code>, <code>CAM‑F</code>, <code>CAM‑R</code>. Future‑you will thank present‑you.</div>
+    </section>
+
+    <section class="card">
+      <h2 id="maint">12) Maintenance & troubleshooting</h2>
+      <ul>
+        <li><strong>Services</strong>: <code>docker ps</code>, <code>docker logs &lt;name&gt;</code>, <code>systemctl status hostapd dnsmasq</code></li>
+        <li><strong>Wi‑Fi drops</strong>: lower fps/bitrate; add 100 µF near cams; move antennas away from metal.</li>
+        <li><strong>Storage errors</strong>: check <code>dmesg</code>; SMART for USB SSDs; confirm <code>/etc/fstab</code> UUID.</li>
+        <li><strong>Thermals</strong>: verify fan curve; consider a 30 mm blower aimed at NVMe.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2 id="roadmap">13) Roadmap (scale to 4 cams, AI, cloud)</h2>
+      <ul>
+        <li>Add CAM‑L and CAM‑R side units; keep each on fixed IPs (.21–.24).</li>
+        <li>Migrate to Frigate + Coral USB for object detection (people/vehicle events).</li>
+        <li>Optional: nightly rsync to a portable SSD when at home; or push thumbnails to a cloud bucket when on Wi‑Fi.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="appendix">
+      <h2>Appendix: wiring & reference configs</h2>
+
+      <h3>A1. ESP32‑CAM flashing pinout (AI‑Thinker)</h3>
+<pre><code>FTDI 3.3V TTL  &lt;--&gt;  ESP32‑CAM pins
+GND            &lt;--&gt;  GND
+5V             &lt;--&gt;  5V  (module has onboard regulator)
+TXD            &lt;--&gt;  U0R (GPIO3)
+RXD            &lt;--&gt;  U0T (GPIO1)
+GPIO0          &lt;--&gt;  GND (only for flashing)
+RESET          ↻  tap after toggling GPIO0 for boot mode
+</code></pre>
+
+      <h3>A2. System map</h3>
+<pre><code>[ESP32‑CAM Front]  --wifi-->  
+[ESP32‑CAM Rear ]  --wifi-->   (AP)  RangerEye (Pi 5)  --NVMe-->  /mnt/rangereye
+                                   \--web-->  Admin UI (LAN)
+Power: SOLIX → 5V buck → Pi + cams (fused)
+</code></pre>
+
+      <h3>A3. UFW (optional)</h3>
+<pre><code class="language-bash">sudo apt -y install ufw
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp
+sudo ufw allow 80,443,8080,8765/tcp
+sudo ufw allow from 10.42.0.0/24
+sudo ufw enable
+</code></pre>
+
+      <h3>A4. Shinobi pruning (concept)</h3>
+      <p>Set per‑camera retention to <em>N days</em> or <em>max used space</em> (e.g., 80%). Enable <em>delete old files</em> when exceeded.</p>
+
+      <h3>A5. MotionEye motion tuning (starter)</h3>
+      <ul>
+        <li>Frame change threshold: 5–10%</li>
+        <li>Noise level: medium</li>
+        <li>Mask out dashboard/hood regions to reduce false positives</li>
+      </ul>
+
+      <div class="hr"></div>
+      <p class="foot">Disclaimer: obey local recording/privacy laws; mount hardware so it never obstructs the driver’s field of view. If in doubt, power it down before dealing with law enforcement or service personnel.</p>
+    </section>
+
+  </div>
+</body>
+</html>

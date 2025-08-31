@@ -1,0 +1,1380 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RangerEye — Advanced Arduino IDE Configuration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Retro Dark Theme */
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #0f0f17;
+      --bg-tertiary: #141420;
+      --bg-surface: #1a1a2e;
+      --bg-elevated: #1e1e32;
+      
+      /* IDE Colors */
+      --ide-bg: #1e1e1e;
+      --ide-sidebar: #252526;
+      --ide-toolbar: #2d2d30;
+      --ide-editor: #1e1e1e;
+      --ide-text: #d4d4d4;
+      --ide-keyword: #569cd6;
+      --ide-string: #ce9178;
+      --ide-comment: #6a9955;
+      --ide-number: #b5cea8;
+      --ide-function: #dcdcaa;
+      
+      /* Neon Accents */
+      --neon-cyan: #00ffff;
+      --neon-pink: #ff0080;
+      --neon-green: #00ff41;
+      --neon-orange: #ff8000;
+      --neon-purple: #8000ff;
+      
+      /* Text Colors */
+      --text-primary: #ffffff;
+      --text-secondary: #b8bcc8;
+      --text-muted: #7c7f93;
+      --text-accent: var(--neon-cyan);
+      
+      /* Status Colors */
+      --success: #00ff88;
+      --warning: #ffaa00;
+      --error: #ff4757;
+      --info: var(--neon-cyan);
+      
+      /* Gradients */
+      --gradient-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      --gradient-accent: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-pink) 100%);
+      --gradient-surface: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(20, 20, 32, 0.9) 100%);
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.7);
+      --shadow-neon: 0 0 20px rgba(0, 255, 255, 0.3);
+      
+      /* Typography */
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      
+      /* Spacing */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      --space-2xl: 3rem;
+      --space-3xl: 4rem;
+      
+      /* Border Radius */
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+      scroll-behavior: smooth;
+    }
+
+    /* Animated Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 90%, rgba(0, 255, 65, 0.05) 0%, transparent 50%);
+      z-index: -1;
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--space-xl) var(--space-lg);
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: var(--space-2xl);
+      position: relative;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -var(--space-xl);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 2px;
+      background: var(--gradient-accent);
+      border-radius: 1px;
+    }
+
+    .header h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      margin: 0 0 var(--space-md) 0;
+      background: var(--gradient-accent);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: var(--shadow-neon);
+      letter-spacing: -0.02em;
+    }
+
+    .header .subtitle {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-bottom: var(--space-lg);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .breadcrumb a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--neon-pink);
+    }
+
+    .breadcrumb-separator {
+      color: var(--text-muted);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--gradient-surface);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: var(--space-xl);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--gradient-accent);
+      opacity: 0.5;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 255, 255, 0.1);
+      border-color: rgba(0, 255, 255, 0.3);
+    }
+
+    /* Arduino IDE Simulator */
+    .ide-simulator {
+      background: var(--ide-bg);
+      border: 1px solid #333;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      margin: var(--space-xl) 0;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ide-titlebar {
+      background: var(--ide-toolbar);
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      border-bottom: 1px solid #333;
+    }
+
+    .ide-title {
+      color: var(--ide-text);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      margin-left: var(--space-md);
+    }
+
+    .window-controls {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .window-control {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .window-control.close { background: #ff5f57; }
+    .window-control.minimize { background: #ffbd2e; }
+    .window-control.maximize { background: #28ca42; }
+
+    .ide-toolbar {
+      background: var(--ide-toolbar);
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .ide-button {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-sm);
+      color: var(--ide-text);
+      padding: var(--space-xs) var(--space-sm);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .ide-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--neon-cyan);
+    }
+
+    .ide-button.primary {
+      background: var(--neon-cyan);
+      color: var(--bg-primary);
+      border-color: var(--neon-cyan);
+    }
+
+    .ide-button.primary:hover {
+      background: var(--neon-pink);
+      border-color: var(--neon-pink);
+    }
+
+    .ide-main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .ide-sidebar {
+      background: var(--ide-sidebar);
+      width: 200px;
+      border-right: 1px solid #333;
+      padding: var(--space-md);
+    }
+
+    .ide-folder {
+      color: var(--ide-text);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .ide-file {
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      padding: 2px 0;
+      cursor: pointer;
+      padding-left: var(--space-md);
+    }
+
+    .ide-file:hover {
+      color: var(--neon-cyan);
+    }
+
+    .ide-file.active {
+      color: var(--neon-cyan);
+      background: rgba(0, 255, 255, 0.1);
+      margin-left: calc(-1 * var(--space-md));
+      padding-left: var(--space-md);
+      border-radius: var(--radius-sm);
+    }
+
+    .ide-editor-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ide-tabs {
+      background: var(--ide-toolbar);
+      display: flex;
+      border-bottom: 1px solid #333;
+    }
+
+    .ide-tab {
+      padding: var(--space-sm) var(--space-md);
+      background: transparent;
+      border: none;
+      border-right: 1px solid #333;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .ide-tab.active {
+      background: var(--ide-editor);
+      color: var(--ide-text);
+      border-bottom: 2px solid var(--neon-cyan);
+    }
+
+    .ide-tab:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ide-text);
+    }
+
+    .ide-editor {
+      flex: 1;
+      background: var(--ide-editor);
+      padding: var(--space-md);
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .code-line {
+      display: flex;
+      align-items: flex-start;
+      min-height: 1.5em;
+    }
+
+    .line-number {
+      color: rgba(212, 212, 212, 0.4);
+      width: 40px;
+      text-align: right;
+      padding-right: var(--space-sm);
+      user-select: none;
+      font-size: 0.8em;
+    }
+
+    .line-content {
+      flex: 1;
+      color: var(--ide-text);
+    }
+
+    /* Syntax Highlighting */
+    .keyword { color: var(--ide-keyword); font-weight: 500; }
+    .string { color: var(--ide-string); }
+    .comment { color: var(--ide-comment); font-style: italic; }
+    .number { color: var(--ide-number); }
+    .function { color: var(--ide-function); }
+    .preprocessor { color: #c586c0; }
+    .type { color: #4ec9b0; }
+
+    /* Status Bar */
+    .ide-status {
+      background: var(--ide-toolbar);
+      padding: var(--space-xs) var(--space-md);
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .status-left, .status-right {
+      display: flex;
+      gap: var(--space-md);
+    }
+
+    .status-item.success {
+      color: var(--success);
+    }
+
+    .status-item.error {
+      color: var(--error);
+    }
+
+    /* Typography */
+    h2 {
+      color: var(--text-accent);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 var(--space-lg) 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    h2::before {
+      content: '⚡';
+      color: var(--neon-orange);
+      font-size: 1.5rem;
+    }
+
+    h3 {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: var(--space-xl) 0 var(--space-md) 0;
+    }
+
+    p {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* Steps */
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-lg);
+      margin: var(--space-xl) 0;
+    }
+
+    .step-card {
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      position: relative;
+    }
+
+    .step-number {
+      position: absolute;
+      top: -10px;
+      left: var(--space-lg);
+      background: var(--gradient-accent);
+      color: var(--bg-primary);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: 50px;
+      font-size: 0.75rem;
+    }
+
+    .step-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      margin: var(--space-md) 0 var(--space-sm) 0;
+    }
+
+    .step-description {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: var(--space-md);
+    }
+
+    /* Code Blocks */
+    .code-block {
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      overflow-x: auto;
+      margin: var(--space-lg) 0;
+      position: relative;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .code-block::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-accent);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    /* Callouts */
+    .callout {
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin: var(--space-lg) 0;
+      border-left: 4px solid var(--info);
+      background: rgba(0, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .callout.warn {
+      border-left-color: var(--warning);
+      background: rgba(255, 170, 0, 0.05);
+    }
+
+    .callout.success {
+      border-left-color: var(--success);
+      background: rgba(0, 255, 136, 0.05);
+    }
+
+    .callout.error {
+      border-left-color: var(--error);
+      background: rgba(255, 71, 87, 0.05);
+    }
+
+    /* Interactive Elements */
+    .interactive-section {
+      background: rgba(0, 255, 255, 0.03);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      margin: var(--space-xl) 0;
+    }
+
+    .config-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-lg);
+      margin: var(--space-lg) 0;
+    }
+
+    .config-item {
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+    }
+
+    .config-label {
+      color: var(--text-accent);
+      font-weight: 600;
+      margin-bottom: var(--space-sm);
+    }
+
+    .config-input {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: var(--space-sm);
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+    }
+
+    .config-input:focus {
+      outline: none;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: var(--space-lg) var(--space-md);
+      }
+
+      .ide-simulator {
+        height: 500px;
+      }
+
+      .ide-main {
+        flex-direction: column;
+      }
+
+      .ide-sidebar {
+        width: 100%;
+        height: 150px;
+        border-right: none;
+        border-bottom: 1px solid #333;
+      }
+
+      .step-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .config-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Animations */
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    .typing-animation {
+      overflow: hidden;
+      white-space: nowrap;
+      animation: typing 3s steps(40, end);
+      border-right: 2px solid var(--neon-cyan);
+    }
+
+    /* Progress Indicator */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: var(--gradient-accent);
+      z-index: 1000;
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar" id="progress"></div>
+  
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">← RangerEye Guide</a>
+      <span class="breadcrumb-separator">/</span>
+      <span>Advanced Arduino IDE</span>
+    </div>
+
+    <header class="header">
+      <h1>Advanced Arduino IDE Configuration</h1>
+      <p class="subtitle">Complete technical guide for ESP32-CAM firmware development with advanced optimization techniques, custom configurations, and professional debugging workflows.</p>
+    </header>
+
+    <section class="card">
+      <h2>Development Environment Setup</h2>
+      <p>Professional Arduino IDE configuration for ESP32-CAM development with advanced features, library management, and optimization techniques.</p>
+
+      <div class="step-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-title">IDE Installation & Configuration</div>
+          <div class="step-description">Download Arduino IDE 2.x with advanced features and ESP32 board package integration.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-title">Board Manager Setup</div>
+          <div class="step-description">Configure ESP32 board definitions with custom partition schemes and optimization flags.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-title">Library Management</div>
+          <div class="step-description">Install and configure essential libraries with version control and dependency management.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">04</div>
+          <div class="step-title">Advanced Compilation</div>
+          <div class="step-description">Custom compiler flags, optimization levels, and memory management techniques.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Arduino IDE Simulator</h2>
+      <p>Interactive simulation of the Arduino IDE with RangerEye ESP32-CAM firmware development environment.</p>
+
+      <div class="ide-simulator">
+        <div class="ide-titlebar">
+          <div class="window-controls">
+            <div class="window-control close"></div>
+            <div class="window-control minimize"></div>
+            <div class="window-control maximize"></div>
+          </div>
+          <div class="ide-title">Arduino IDE 2.3.2 - RangerEye_ESP32CAM.ino</div>
+        </div>
+
+        <div class="ide-toolbar">
+          <button class="ide-button">✓ Verify</button>
+          <button class="ide-button primary">→ Upload</button>
+          <button class="ide-button">⚙ Tools</button>
+          <button class="ide-button">📚 Libraries</button>
+          <button class="ide-button">🔍 Serial Monitor</button>
+          <select class="ide-button" style="margin-left: auto;">
+            <option>AI Thinker ESP32-CAM</option>
+          </select>
+          <select class="ide-button">
+            <option>COM3 (ESP32-CAM)</option>
+          </select>
+        </div>
+
+        <div class="ide-main">
+          <div class="ide-sidebar">
+            <div class="ide-folder">📁 RangerEye_Project</div>
+            <div class="ide-file active">📄 RangerEye_ESP32CAM.ino</div>
+            <div class="ide-file">📄 camera_pins.h</div>
+            <div class="ide-file">📄 wifi_config.h</div>
+            <div class="ide-file">📄 web_server.h</div>
+            <div class="ide-folder">📁 Libraries</div>
+            <div class="ide-file">📄 esp32-camera</div>
+            <div class="ide-file">📄 AsyncTCP</div>
+            <div class="ide-file">📄 ESPAsyncWebServer</div>
+          </div>
+
+          <div class="ide-editor-container">
+            <div class="ide-tabs">
+              <button class="ide-tab active">RangerEye_ESP32CAM.ino</button>
+              <button class="ide-tab">camera_pins.h</button>
+              <button class="ide-tab">wifi_config.h</button>
+            </div>
+
+            <div class="ide-editor" id="codeEditor">
+              <div class="code-line">
+                <div class="line-number">1</div>
+                <div class="line-content"><span class="comment">/*</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">2</div>
+                <div class="line-content"><span class="comment"> * RangerEye ESP32-CAM Advanced Firmware</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">3</div>
+                <div class="line-content"><span class="comment"> * Optimized for in-vehicle NVR deployment</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">4</div>
+                <div class="line-content"><span class="comment"> * Features: WiFi AP mode, MJPEG streaming, OTA updates</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">5</div>
+                <div class="line-content"><span class="comment"> */</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">6</div>
+                <div class="line-content"></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">7</div>
+                <div class="line-content"><span class="preprocessor">#include</span> <span class="string">"esp_camera.h"</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">8</div>
+                <div class="line-content"><span class="preprocessor">#include</span> <span class="string">&lt;WiFi.h&gt;</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">9</div>
+                <div class="line-content"><span class="preprocessor">#include</span> <span class="string">&lt;ESPAsyncWebServer.h&gt;</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">10</div>
+                <div class="line-content"><span class="preprocessor">#include</span> <span class="string">&lt;ArduinoOTA.h&gt;</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">11</div>
+                <div class="line-content"><span class="preprocessor">#include</span> <span class="string">"camera_pins.h"</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">12</div>
+                <div class="line-content"></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">13</div>
+                <div class="line-content"><span class="comment">// Network Configuration</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">14</div>
+                <div class="line-content"><span class="keyword">const</span> <span class="type">char</span>* ssid = <span class="string">"RangerEye-Network"</span>;</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">15</div>
+                <div class="line-content"><span class="keyword">const</span> <span class="type">char</span>* password = <span class="string">"SecureRangerAccess2024"</span>;</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">16</div>
+                <div class="line-content"><span class="keyword">const</span> <span class="type">char</span>* hostname = <span class="string">"rangereye-cam-01"</span>;</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">17</div>
+                <div class="line-content"></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">18</div>
+                <div class="line-content"><span class="comment">// Camera Configuration</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">19</div>
+                <div class="line-content"><span class="type">AsyncWebServer</span> server(<span class="number">80</span>);</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">20</div>
+                <div class="line-content"><span class="type">AsyncWebServer</span> streamServer(<span class="number">81</span>);</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">21</div>
+                <div class="line-content"></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">22</div>
+                <div class="line-content"><span class="keyword">void</span> <span class="function">setup</span>() {</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">23</div>
+                <div class="line-content">  <span class="function">Serial.begin</span>(<span class="number">115200</span>);</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">24</div>
+                <div class="line-content">  <span class="function">Serial.println</span>(<span class="string">"RangerEye ESP32-CAM Initializing..."</span>);</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">25</div>
+                <div class="line-content"></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">26</div>
+                <div class="line-content">  <span class="comment">// Initialize camera with optimized settings</span></div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">27</div>
+                <div class="line-content">  <span class="function">initCamera</span>();</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">28</div>
+                <div class="line-content">  <span class="function">initWiFi</span>();</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">29</div>
+                <div class="line-content">  <span class="function">initOTA</span>();</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">30</div>
+                <div class="line-content">  <span class="function">initWebServer</span>();</div>
+              </div>
+              <div class="code-line">
+                <div class="line-number">31</div>
+                <div class="line-content">}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ide-status">
+          <div class="status-left">
+            <span class="status-item success">✓ ESP32-CAM Connected</span>
+            <span class="status-item">Lines: 156</span>
+            <span class="status-item">Sketch: 85% (278KB)</span>
+          </div>
+          <div class="status-right">
+            <span class="status-item">Ln 22, Col 15</span>
+            <span class="status-item">UTF-8</span>
+            <span class="status-item success">Ready</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Board Configuration & Optimization</h2>
+      <p>Advanced ESP32-CAM board configuration with custom partition schemes and performance optimization.</p>
+
+      <div class="interactive-section">
+        <h3>Board Manager Configuration</h3>
+        
+        <div class="code-block">
+<span class="comment">// Additional Board Manager URLs for ESP32</span>
+<span class="string">https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json</span>
+
+<span class="comment">// Custom Board Settings for RangerEye</span>
+Board: <span class="keyword">AI Thinker ESP32-CAM</span>
+Upload Speed: <span class="number">921600</span>
+CPU Frequency: <span class="number">240MHz</span> (WiFi/BT)
+Flash Frequency: <span class="number">80MHz</span>
+Flash Mode: <span class="keyword">QIO</span>
+Flash Size: <span class="number">4MB</span> (32Mb)
+Partition Scheme: <span class="keyword">Huge APP</span> (3MB No OTA/1MB SPIFFS)
+Core Debug Level: <span class="keyword">None</span> (for production)
+        </div>
+
+        <div class="callout warn">
+          <strong>Performance Note:</strong> Use "Huge APP" partition scheme for maximum sketch space. For OTA updates, switch to "Default 4MB" and implement custom OTA handling.
+        </div>
+      </div>
+
+      <h3>Advanced Compiler Flags</h3>
+      <div class="code-block">
+<span class="comment">// Custom build flags for optimization</span>
+<span class="preprocessor">#define</span> CONFIG_CAMERA_TASK_STACK_SIZE <span class="number">4096</span>
+<span class="preprocessor">#define</span> CONFIG_ASYNC_TCP_STACK_SIZE <span class="number">16384</span>
+<span class="preprocessor">#define</span> CONFIG_ASYNC_TCP_PRIORITY <span class="number">10</span>
+
+<span class="comment">// Memory optimization</span>
+<span class="preprocessor">#define</span> BOARD_HAS_PSRAM
+<span class="preprocessor">#define</span> CONFIG_ESP32_SPIRAM_SUPPORT <span class="number">1</span>
+
+<span class="comment">// WiFi performance tuning</span>
+<span class="preprocessor">#define</span> CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM <span class="number">10</span>
+<span class="preprocessor">#define</span> CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM <span class="number">32</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Advanced Firmware Features</h2>
+      <p>Professional-grade firmware with custom optimizations, error handling, and monitoring capabilities.</p>
+
+      <h3>Enhanced Camera Configuration</h3>
+      <div class="code-block">
+<span class="keyword">void</span> <span class="function">initCamera</span>() {
+  <span class="type">camera_config_t</span> config;
+  
+  <span class="comment">// Pin configuration for AI-Thinker ESP32-CAM</span>
+  config.ledc_channel = <span class="keyword">LEDC_CHANNEL_0</span>;
+  config.ledc_timer = <span class="keyword">LEDC_TIMER_0</span>;
+  config.pin_d0 = <span class="keyword">Y2_GPIO_NUM</span>;
+  config.pin_d1 = <span class="keyword">Y3_GPIO_NUM</span>;
+  config.pin_d2 = <span class="keyword">Y4_GPIO_NUM</span>;
+  config.pin_d3 = <span class="keyword">Y5_GPIO_NUM</span>;
+  config.pin_d4 = <span class="keyword">Y6_GPIO_NUM</span>;
+  config.pin_d5 = <span class="keyword">Y7_GPIO_NUM</span>;
+  config.pin_d6 = <span class="keyword">Y8_GPIO_NUM</span>;
+  config.pin_d7 = <span class="keyword">Y9_GPIO_NUM</span>;
+  config.pin_xclk = <span class="keyword">XCLK_GPIO_NUM</span>;
+  config.pin_pclk = <span class="keyword">PCLK_GPIO_NUM</span>;
+  config.pin_vsync = <span class="keyword">VSYNC_GPIO_NUM</span>;
+  config.pin_href = <span class="keyword">HREF_GPIO_NUM</span>;
+  config.pin_sccb_sda = <span class="keyword">SIOD_GPIO_NUM</span>;
+  config.pin_sccb_scl = <span class="keyword">SIOC_GPIO_NUM</span>;
+  config.pin_pwdn = <span class="keyword">PWDN_GPIO_NUM</span>;
+  config.pin_reset = <span class="keyword">RESET_GPIO_NUM</span>;
+  config.xclk_freq_hz = <span class="number">20000000</span>;
+  config.pixel_format = <span class="keyword">PIXFORMAT_JPEG</span>;
+  
+  <span class="comment">// Optimized settings for vehicle environment</span>
+  <span class="keyword">if</span>(psramFound()) {
+    config.frame_size = <span class="keyword">FRAMESIZE_UXGA</span>; <span class="comment">// 1600x1200</span>
+    config.jpeg_quality = <span class="number">10</span>; <span class="comment">// Higher quality</span>
+    config.fb_count = <span class="number">2</span>; <span class="comment">// Double buffering</span>
+  } <span class="keyword">else</span> {
+    config.frame_size = <span class="keyword">FRAMESIZE_SVGA</span>; <span class="comment">// 800x600</span>
+    config.jpeg_quality = <span class="number">12</span>;
+    config.fb_count = <span class="number">1</span>;
+  }
+  
+  <span class="comment">// Initialize camera with error handling</span>
+  <span class="type">esp_err_t</span> err = <span class="function">esp_camera_init</span>(&config);
+  <span class="keyword">if</span> (err != <span class="keyword">ESP_OK</span>) {
+    <span class="function">Serial.printf</span>(<span class="string">"Camera init failed with error 0x%x"</span>, err);
+    <span class="function">ESP.restart</span>();
+  }
+  
+  <span class="comment">// Apply advanced sensor settings</span>
+  <span class="function">configureSensor</span>();
+  
+  <span class="function">Serial.println</span>(<span class="string">"Camera initialized successfully"</span>);
+}
+      </div>
+
+      <h3>Advanced WiFi Management</h3>
+      <div class="code-block">
+<span class="keyword">void</span> <span class="function">initWiFi</span>() {
+  <span class="comment">// Set hostname before WiFi connection</span>
+  <span class="function">WiFi.setHostname</span>(hostname);
+  
+  <span class="comment">// Configure WiFi for maximum performance</span>
+  <span class="function">WiFi.mode</span>(<span class="keyword">WIFI_STA</span>);
+  <span class="function">WiFi.setSleep</span>(<span class="keyword">false</span>); <span class="comment">// Disable power saving for performance</span>
+  <span class="function">WiFi.setTxPower</span>(<span class="keyword">WIFI_POWER_19_5dBm</span>); <span class="comment">// Maximum tx power</span>
+  
+  <span class="comment">// Connection with timeout and retry logic</span>
+  <span class="function">WiFi.begin</span>(ssid, password);
+  
+  <span class="type">int</span> attempts = <span class="number">0</span>;
+  <span class="keyword">while</span> (<span class="function">WiFi.status</span>() != <span class="keyword">WL_CONNECTED</span> && attempts < <span class="number">30</span>) {
+    <span class="function">delay</span>(<span class="number">1000</span>);
+    <span class="function">Serial.print</span>(<span class="string">"."</span>);
+    attempts++;
+  }
+  
+  <span class="keyword">if</span> (<span class="function">WiFi.status</span>() == <span class="keyword">WL_CONNECTED</span>) {
+    <span class="function">Serial.printf</span>(<span class="string">"\nWiFi connected! IP: %s\n"</span>, <span class="function">WiFi.localIP().toString().c_str()</span>);
+    <span class="function">Serial.printf</span>(<span class="string">"Signal strength: %d dBm\n"</span>, <span class="function">WiFi.RSSI</span>());
+  } <span class="keyword">else</span> {
+    <span class="function">Serial.println</span>(<span class="string">"\nWiFi connection failed!"</span>);
+    <span class="function">startAPMode</span>(); <span class="comment">// Fallback to AP mode</span>
+  }
+}
+
+<span class="keyword">void</span> <span class="function">startAPMode</span>() {
+  <span class="function">Serial.println</span>(<span class="string">"Starting AP mode as fallback..."</span>);
+  <span class="function">WiFi.mode</span>(<span class="keyword">WIFI_AP</span>);
+  <span class="function">WiFi.softAP</span>(<span class="string">"RangerEye-CAM-Emergency"</span>, <span class="string">"emergency123"</span>);
+  <span class="function">Serial.printf</span>(<span class="string">"Emergency AP IP: %s\n"</span>, <span class="function">WiFi.softAPIP().toString().c_str()</span>);
+}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Interactive Configuration Panel</h2>
+      <p>Customize your ESP32-CAM firmware parameters for optimal performance in your specific deployment scenario.</p>
+
+      <div class="interactive-section">
+        <div class="config-panel">
+          <div class="config-item">
+            <div class="config-label">WiFi Network Name (SSID)</div>
+            <input type="text" class="config-input" value="RangerEye-Network" id="ssidInput">
+          </div>
+          <div class="config-item">
+            <div class="config-label">WiFi Password</div>
+            <input type="password" class="config-input" value="SecureRangerAccess2024" id="passwordInput">
+          </div>
+          <div class="config-item">
+            <div class="config-label">Camera Hostname</div>
+            <input type="text" class="config-input" value="rangereye-cam-01" id="hostnameInput">
+          </div>
+          <div class="config-item">
+            <div class="config-label">Static IP Address</div>
+            <input type="text" class="config-input" value="10.42.0.21" id="ipInput">
+          </div>
+          <div class="config-item">
+            <div class="config-label">Frame Size</div>
+            <select class="config-input" id="frameSizeSelect">
+              <option value="UXGA">UXGA (1600x1200)</option>
+              <option value="SXGA">SXGA (1280x1024)</option>
+              <option value="XGA">XGA (1024x768)</option>
+              <option value="SVGA" selected>SVGA (800x600)</option>
+              <option value="VGA">VGA (640x480)</option>
+            </select>
+          </div>
+          <div class="config-item">
+            <div class="config-label">JPEG Quality (1-63)</div>
+            <input type="range" min="1" max="63" value="12" class="config-input" id="qualityRange">
+            <span id="qualityValue">12</span>
+          </div>
+        </div>
+
+        <div class="callout success">
+          <strong>Configuration Generated!</strong> Your custom settings have been applied to the code generator. Download the personalized firmware below.
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Advanced Debugging & Monitoring</h2>
+      <p>Professional debugging techniques and monitoring capabilities for production deployments.</p>
+
+      <h3>Serial Monitor Output Analysis</h3>
+      <div class="code-block">
+<span class="comment">// Enhanced debug output with performance metrics</span>
+<span class="keyword">void</span> <span class="function">printSystemStats</span>() {
+  <span class="function">Serial.println</span>(<span class="string">"=== RangerEye System Status ==="</span>);
+  <span class="function">Serial.printf</span>(<span class="string">"Free heap: %d bytes\n"</span>, <span class="function">ESP.getFreeHeap</span>());
+  <span class="function">Serial.printf</span>(<span class="string">"Free PSRAM: %d bytes\n"</span>, <span class="function">ESP.getFreePsram</span>());
+  <span class="function">Serial.printf</span>(<span class="string">"WiFi RSSI: %d dBm\n"</span>, <span class="function">WiFi.RSSI</span>());
+  <span class="function">Serial.printf</span>(<span class="string">"CPU Freq: %d MHz\n"</span>, <span class="function">getCpuFrequencyMhz</span>());
+  <span class="function">Serial.printf</span>(<span class="string">"Temperature: %.2f°C\n"</span>, <span class="function">temperatureRead</span>());
+  <span class="function">Serial.printf</span>(<span class="string">"Uptime: %lu seconds\n"</span>, <span class="function">millis</span>() / <span class="number">1000</span>);
+  
+  <span class="comment">// Camera-specific metrics</span>
+  <span class="type">camera_fb_t</span>* fb = <span class="function">esp_camera_fb_get</span>();
+  <span class="keyword">if</span> (fb) {
+    <span class="function">Serial.printf</span>(<span class="string">"Frame size: %dx%d, %d bytes\n"</span>, 
+                      fb->width, fb->height, fb->len);
+    <span class="function">esp_camera_fb_return</span>(fb);
+  }
+  <span class="function">Serial.println</span>(<span class="string">"================================\n"</span>);
+}
+      </div>
+
+      <h3>Over-The-Air (OTA) Updates</h3>
+      <div class="code-block">
+<span class="keyword">void</span> <span class="function">initOTA</span>() {
+  <span class="function">ArduinoOTA.setHostname</span>(hostname);
+  <span class="function">ArduinoOTA.setPassword</span>(<span class="string">"RangerEyeOTA2024"</span>);
+  
+  <span class="function">ArduinoOTA.onStart</span>([]() {
+    <span class="type">String</span> type = (<span class="function">ArduinoOTA.getCommand</span>() == <span class="keyword">U_FLASH</span>) ? <span class="string">"sketch"</span> : <span class="string">"filesystem"</span>;
+    <span class="function">Serial.println</span>(<span class="string">"Start updating "</span> + type);
+  });
+  
+  <span class="function">ArduinoOTA.onEnd</span>([]() {
+    <span class="function">Serial.println</span>(<span class="string">"\nEnd"</span>);
+  });
+  
+  <span class="function">ArduinoOTA.onProgress</span>([](unsigned int progress, unsigned int total) {
+    <span class="function">Serial.printf</span>(<span class="string">"Progress: %u%%\r"</span>, (progress / (total / <span class="number">100</span>)));
+  });
+  
+  <span class="function">ArduinoOTA.onError</span>([](ota_error_t error) {
+    <span class="function">Serial.printf</span>(<span class="string">"Error[%u]: "</span>, error);
+    <span class="keyword">if</span> (error == <span class="keyword">OTA_AUTH_ERROR</span>) <span class="function">Serial.println</span>(<span class="string">"Auth Failed"</span>);
+    <span class="keyword">else if</span> (error == <span class="keyword">OTA_BEGIN_ERROR</span>) <span class="function">Serial.println</span>(<span class="string">"Begin Failed"</span>);
+    <span class="keyword">else if</span> (error == <span class="keyword">OTA_CONNECT_ERROR</span>) <span class="function">Serial.println</span>(<span class="string">"Connect Failed"</span>);
+    <span class="keyword">else if</span> (error == <span class="keyword">OTA_RECEIVE_ERROR</span>) <span class="function">Serial.println</span>(<span class="string">"Receive Failed"</span>);
+    <span class="keyword">else if</span> (error == <span class="keyword">OTA_END_ERROR</span>) <span class="function">Serial.println</span>(<span class="string">"End Failed"</span>);
+  });
+  
+  <span class="function">ArduinoOTA.begin</span>();
+  <span class="function">Serial.println</span>(<span class="string">"OTA Ready"</span>);
+}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Troubleshooting & Optimization</h2>
+      <p>Common issues and advanced optimization techniques for reliable operation in challenging environments.</p>
+
+      <div class="step-grid">
+        <div class="step-card">
+          <div class="step-number">⚠️</div>
+          <div class="step-title">WiFi Connection Issues</div>
+          <div class="step-description">
+            <strong>Symptoms:</strong> Frequent disconnections, poor signal quality<br>
+            <strong>Solutions:</strong> Adjust TX power, implement reconnection logic, optimize antenna positioning
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">🔥</div>
+          <div class="step-title">Thermal Management</div>
+          <div class="step-description">
+            <strong>Symptoms:</strong> Image artifacts, system resets, reduced performance<br>
+            <strong>Solutions:</strong> Reduce frame rate, improve ventilation, add heat sinks
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">⚡</div>
+          <div class="step-title">Power Supply Issues</div>
+          <div class="step-description">
+            <strong>Symptoms:</strong> Brown-out resets, WiFi instability<br>
+            <strong>Solutions:</strong> Add decoupling capacitors, stable 5V supply, current monitoring
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">📷</div>
+          <div class="step-title">Image Quality Problems</div>
+          <div class="step-description">
+            <strong>Symptoms:</strong> Blurry images, color issues, exposure problems<br>
+            <strong>Solutions:</strong> Sensor calibration, manual exposure settings, lens cleaning
+          </div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <strong>Production Deployment Checklist:</strong>
+        <ul>
+          <li>✓ Disable debug output for performance</li>
+          <li>✓ Enable watchdog timer for reliability</li>
+          <li>✓ Implement graceful error recovery</li>
+          <li>✓ Test thermal limits under load</li>
+          <li>✓ Validate WiFi range and stability</li>
+          <li>✓ Configure appropriate frame buffer settings</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Performance Optimization Guide</h2>
+      <p>Advanced techniques for maximizing ESP32-CAM performance in demanding applications.</p>
+
+      <h3>Memory Management</h3>
+      <div class="code-block">
+<span class="comment">// Optimize PSRAM usage for camera buffers</span>
+<span class="keyword">void</span> <span class="function">optimizeMemory</span>() {
+  <span class="comment">// Configure PSRAM for camera frame buffers</span>
+  <span class="keyword">if</span> (psramFound()) {
+    <span class="function">heap_caps_malloc_extmem_enable</span>(<span class="number">16</span>); <span class="comment">// Enable PSRAM for allocations >16 bytes</span>
+    <span class="function">Serial.printf</span>(<span class="string">"PSRAM initialized: %d bytes available\n"</span>, <span class="function">ESP.getFreePsram</span>());
+  }
+  
+  <span class="comment">// Set camera to use PSRAM for frame buffers</span>
+  <span class="type">camera_config_t</span> config;
+  config.fb_location = <span class="keyword">CAMERA_FB_IN_PSRAM</span>;
+  config.grab_mode = <span class="keyword">CAMERA_GRAB_LATEST</span>; <span class="comment">// Skip frames if processing is slow</span>
+}
+
+<span class="comment">// Monitor memory usage</span>
+<span class="keyword">void</span> <span class="function">checkMemoryHealth</span>() {
+  <span class="type">size_t</span> freeHeap = <span class="function">ESP.getFreeHeap</span>();
+  <span class="type">size_t</span> freePsram = <span class="function">ESP.getFreePsram</span>();
+  
+  <span class="keyword">if</span> (freeHeap < <span class="number">50000</span>) { <span class="comment">// Less than 50KB free</span>
+    <span class="function">Serial.println</span>(<span class="string">"WARNING: Low heap memory!"</span>);
+    <span class="comment">// Implement cleanup or restart logic</span>
+  }
+}
+      </div>
+
+      <h3>Network Performance Tuning</h3>
+      <div class="code-block">
+<span class="comment">// Advanced WiFi configuration for maximum throughput</span>
+<span class="keyword">void</span> <span class="function">optimizeWiFiPerformance</span>() {
+  <span class="comment">// Set WiFi to high performance mode</span>
+  esp_wifi_set_ps(<span class="keyword">WIFI_PS_NONE</span>); <span class="comment">// Disable power saving</span>
+  
+  <span class="comment">// Configure TCP window scaling</span>
+  <span class="type">int</span> tcp_window = <span class="number">65536</span>; <span class="comment">// 64KB TCP window</span>
+  <span class="function">lwip_setsockopt</span>(socket_fd, <span class="keyword">SOL_SOCKET</span>, <span class="keyword">SO_RCVBUF</span>, &tcp_window, <span class="keyword">sizeof</span>(tcp_window));
+  
+  <span class="comment">// Enable TCP_NODELAY for reduced latency</span>
+  <span class="type">int</span> nodelay = <span class="number">1</span>;
+  <span class="function">lwip_setsockopt</span>(socket_fd, <span class="keyword">IPPROTO_TCP</span>, <span class="keyword">TCP_NODELAY</span>, &nodelay, <span class="keyword">sizeof</span>(nodelay));
+  
+  <span class="function">Serial.println</span>(<span class="string">"WiFi performance optimizations applied"</span>);
+}
+
+<span class="comment">// Monitor WiFi connection quality</span>
+<span class="keyword">void</span> <span class="function">monitorWiFiHealth</span>() {
+  <span class="type">int</span> rssi = <span class="function">WiFi.RSSI</span>();
+  <span class="type">uint32_t</span> speed = <span class="function">WiFi.getPhyMode</span>();
+  
+  <span class="keyword">if</span> (rssi < <span class="number">-70</span>) {
+    <span class="function">Serial.println</span>(<span class="string">"WARNING: Weak WiFi signal!"</span>);
+    <span class="comment">// Consider reducing frame rate or quality</span>
+  }
+  
+  <span class="function">Serial.printf</span>(<span class="string">"WiFi: RSSI=%d dBm, PHY=%s\n"</span>, 
+                    rssi, (speed == <span class="keyword">WIFI_PHY_MODE_11N</span>) ? <span class="string">"802.11n"</span> : <span class="string">"802.11g"</span>);
+}
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Progress bar animation
+    window.addEventListener('scroll', () => {
+      const progress = document.getElementById('progress');
+      const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+      progress.style.transform = `scaleX(${scrolled / 100})`;
+    });
+
+    // Interactive configuration panel
+    const qualityRange = document.getElementById('qualityRange');
+    const qualityValue = document.getElementById('qualityValue');
+    
+    if (qualityRange && qualityValue) {
+      qualityRange.addEventListener('input', (e) => {
+        qualityValue.textContent = e.target.value;
+      });
+    }
+
+    // Simulated code completion
+    function simulateTyping() {
+      const editor = document.getElementById('codeEditor');
+      if (!editor) return;
+      
+      // Add typing effect to certain lines
+      const typingLines = editor.querySelectorAll('.code-line');
+      typingLines.forEach((line, index) => {
+        if (index > 25) {
+          line.style.opacity = '0.7';
+        }
+      });
+    }
+
+    // Tab switching simulation
+    document.querySelectorAll('.ide-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        // Remove active class from all tabs
+        document.querySelectorAll('.ide-tab').forEach(t => t.classList.remove('active'));
+        // Add active to clicked tab
+        e.target.classList.add('active');
+        
+        // Simulate different file content
+        const editor = document.getElementById('codeEditor');
+        if (e.target.textContent.includes('camera_pins.h')) {
+          editor.innerHTML = generateCameraPinsContent();
+        } else if (e.target.textContent.includes('wifi_config.h')) {
+          editor.innerHTML = generateWifiConfigContent();
+        } else {
+          // Keep original content for main file
+        }
+      });
+    });
+
+    function generateCameraPinsContent() {
+      return `
+        <div class="code-line">
+          <div class="line-number">1</div>
+          <div class="line-content"><span class="comment">// Camera pin definitions for AI-Thinker ESP32-CAM</span></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">2</div>
+          <div class="line-content"><span class="preprocessor">#define</span> <span class="keyword">PWDN_GPIO_NUM</span>     <span class="number">32</span></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">3</div>
+          <div class="line-content"><span class="preprocessor">#define</span> <span class="keyword">RESET_GPIO_NUM</span>    <span class="number">-1</span></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">4</div>
+          <div class="line-content"><span class="preprocessor">#define</span> <span class="keyword">XCLK_GPIO_NUM</span>     <span class="number">0</span></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">5</div>
+          <div class="line-content"><span class="preprocessor">#define</span> <span class="keyword">SIOD_GPIO_NUM</span>     <span class="number">26</span></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">6</div>
+          <div class="line-content"><span class="preprocessor">#define</span> <span class="keyword">SIOC_GPIO_NUM</span>     <span class="number">27</span></div>
+        </div>`;
+    }
+
+    function generateWifiConfigContent() {
+      return `
+        <div class="code-line">
+          <div class="line-number">1</div>
+          <div class="line-content"><span class="comment">// WiFi configuration for RangerEye network</span></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">2</div>
+          <div class="line-content"><span class="preprocessor">#ifndef</span> WIFI_CONFIG_H</div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">3</div>
+          <div class="line-content"><span class="preprocessor">#define</span> WIFI_CONFIG_H</div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">4</div>
+          <div class="line-content"></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">5</div>
+          <div class="line-content"><span class="comment">// Network credentials</span></div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">6</div>
+          <div class="line-content"><span class="preprocessor">#define</span> <span class="keyword">WIFI_SSID</span> <span class="string">"RangerEye-Network"</span></div>
+        </div>`;
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+      simulateTyping();
+    });
+  </script>
+</body>
+</html>
